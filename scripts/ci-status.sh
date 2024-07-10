@@ -4,6 +4,9 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$CURRENT_DIR/helpers.sh"
 
 main() {
+    PANE_PATH=$(tmux display-message -p -F "#{pane_current_path}")
+    cd $PANE_PATH
+
     repo="$(git rev-parse --is-inside-work-tree 2>/dev/null)"
 
     if [ "$repo" ]; then
@@ -18,15 +21,18 @@ main() {
             if [ "$?" -eq 0 ]; then
                 $(set_tmux_option "@ci-previous-update-time" "$current_time")
                 if [ -z  $value ]; then
-                    echo "Unkown"
+                    $(set_tmux_option "@ci-previous-value" "Unknown")
                 else
-                    echo "$value"
+                    $(set_tmux_option "@ci-previous-value" "$value")
                 fi
             fi
         fi
     else
         echo "No Pipelines"
+        return
     fi
+    
+    echo -n $(get_tmux_option "@ci-previous-value")
 }
 
 main

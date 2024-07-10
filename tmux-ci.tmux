@@ -18,7 +18,7 @@ replace_placeholder_in_status_line() {
 
 main() {
   local ci_status="$CURRENT_DIR/scripts/ci-status.sh"
-  replace_placeholder_in_status_line "ci-status" "$ci_status" "status-right"
+  replace_placeholder_in_status_line "ci" "$ci_status" "status-right"
 }
 
 main
