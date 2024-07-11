@@ -3,9 +3,23 @@
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$CURRENT_DIR/helpers.sh"
 
+determine_ci_status() {
+    local host
+    host=$(git config --get remote.origin.url)
+    case "$host" in 
+        *github.com*)
+            # TODO: github needs a little more processing to determine success/fail
+            gh run list --json status --jq '.[].status' --limit 1 
+            ;;
+        *gitlab.com*)
+            glab ci get --output json | jq -r '.status'
+            ;;
+    esac
+}
+
 main() {
     PANE_PATH=$(tmux display-message -p -F "#{pane_current_path}")
-    cd $PANE_PATH
+    cd "$PANE_PATH"
 
     repo="$(git rev-parse --is-inside-work-tree 2>/dev/null)"
 
@@ -16,8 +30,8 @@ main() {
         delta=$((current_time - previous_update))
 
         if [ -z "$previous_update" ] || [ $delta -ge $update_interval ]; then
-            value=$({ gh run list --json status --jq '.[].status' --limit 1 || glab ci get --output json | jq -r '.status'; } | tr -d '\n')
-            if "$?"; then
+            local value=$(determine_ci_status | tr -d '\n')
+            if [ "$?" -eq 0 ]; then
                 $(set_tmux_option "@ci-previous-update-time" "$current_time")
                 if [ -z  "$value" ]; then
                     $(set_tmux_option "@ci-previous-value" "Unknown")
@@ -30,7 +44,7 @@ main() {
         echo "No Pipelines"
         return
     fi
-    
+
     echo -n $(get_tmux_option "@ci-previous-value")
 }
 
