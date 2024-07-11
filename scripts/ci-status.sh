@@ -16,11 +16,10 @@ main() {
         delta=$((current_time - previous_update))
 
         if [ -z "$previous_update" ] || [ $delta -ge $update_interval ]; then
-            # TODO: try both github and gitlab here, use whichever returns something
             value=$({ gh run list --json status --jq '.[].status' --limit 1 || glab ci get --output json | jq -r '.status'; } | tr -d '\n')
-            if [ "$?" -eq 0 ]; then
+            if "$?"; then
                 $(set_tmux_option "@ci-previous-update-time" "$current_time")
-                if [ -z  $value ]; then
+                if [ -z  "$value" ]; then
                     $(set_tmux_option "@ci-previous-value" "Unknown")
                 else
                     $(set_tmux_option "@ci-previous-value" "$value")
