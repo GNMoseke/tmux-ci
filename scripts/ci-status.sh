@@ -8,8 +8,8 @@ determine_ci_status() {
     host=$(git config --get remote.origin.url)
     case "$host" in 
         *github.com*)
-            # TODO: github needs a little more processing to determine success/fail
-            gh run list --json status --jq '.[].status' --limit 1 
+            gh run list --json conclusion --json status --branch "$(git branch --show-current)" --limit 1 \
+                --jq 'if .[].status == "completed" then .[].conclusion else .[].status end'
             ;;
         *gitlab.com*)
             glab ci get --output json | jq -r '.status'
